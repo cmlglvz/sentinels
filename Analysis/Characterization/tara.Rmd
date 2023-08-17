@@ -160,6 +160,12 @@ ggsave(plot = rltv.eukog,
        dpi = 600)
 ```
 
+## Get only eukaryote's ASV
+```{r}
+eukas <- dplyr::filter(etaxa, Kingdom == "Eukaryota" | Kingdom == "Eukaryota:mito" | Kingdom == "Eukaryota:plas" | Kingdom == "Eukaryota:nucl")
+#hacer treemap
+```
+
 
 #Dataframes joint
 ```{r joint, echo=FALSE, message=FALSE, warning=FALSE, include=FALSE}
