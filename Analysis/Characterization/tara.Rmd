@@ -160,10 +160,63 @@ ggsave(plot = rltv.eukog,
        dpi = 600)
 ```
 
+
+## Extract colors from ggplot object
+```{r}
+xtrct <- function(gg.plot) {
+  library(ggplot2)
+  library(stringr)
+  p <- ggplot_build(gg.plot)
+  for (i in 1:length(p$data[[1]])) {
+    v <- p$data[[1]][[1]]
+    c <- str_sub(v, start = 1, end = -3)
+    u <- unique(c)
+  } 
+  print(u)
+}
+```
+
+
 ## Get only eukaryote's ASV
 ```{r}
 eukas <- dplyr::filter(etaxa, Kingdom == "Eukaryota" | Kingdom == "Eukaryota:mito" | Kingdom == "Eukaryota:plas" | Kingdom == "Eukaryota:nucl")
-#hacer treemap
+eukas[is.na(eukas)] <- "Unassigned"
+euk.abun <- dplyr::select(rtara, eukas$Seq) 
+phylum <- tax.sum(euk.abun, eukas, 5) %>% as.data.frame()
+phylum <- add_column(phylum, Sample = rownames(phylum), .before = "Alveolata", .name_repair = "minimal")
+phylum$Sample <- factor(phylum$Sample, levels = phylum$Sample)
+long.phyl <- gather(phylum, "Phylum", "Abundance", 2:33)
+physort <- c("Alveolata","Alveolata:mito","Amoebozoa_X","Ancyromonadida","Apusomonada","Centroplasthelida","Haptophyta","Haptophyta:plas","Cryptophyta","Cryptophyta:mito","Cryptophyta:nucl","Discoba","Discoba:plas","Discosea","Evosea","Chlorophyta","Chlorophyta:plas","Kathablepharidacea","Nebulidia","Opisthokonta","Opisthokonta:mito","Picozoa","Prasinodermophyta","Rhizaria","Rhizaria:nucl","Rhodophyta","Stramenopiles","Streptophyta","Streptophyta:mito","Telonemia","Tubulinea","Unassigned")
+lphyl.plot <- ggplot(long.phyl, aes(x = Sample, y = Abundance, fill = Phylum)) + 
+  geom_bar(position = "fill", stat = "identity", width = 0.7, color = "white") + 
+  scale_fill_viridis(discrete = TRUE, direction = -1, option = "turbo", alpha = 0.8, begin = 0) + 
+  theme_ipsum_rc() + 
+  theme()
+ggsave(plot = lphyl.plot, 
+       filename = "Fig_7_relative_abundance_eukaryotes_phylum_level_tara_v9.png", 
+       path = "X:/Documents/Proyectos_R/sentinels/Figures/Characterization/TARA/", 
+       width = 23, 
+       height = 11, 
+       dpi = 600)
+phyl.data <- ggplot_build(lphyl.plot)
+i <- phyl.data$data[[1]]
+phycol <- str_sub(i[[1]], start = 1, end = -3) %>% unique() %>% as.vector()
+col <- xtrct(lphyl.plot) #in the order from phylum dataframe
+phycol <- data.frame(phylum = colnames(phylum[2:33]),Colors = col)
+phycol <- phycol[order(phycol$phylum, decreasing = FALSE),]
+phycol <- add_column(phycol, sort = physort, .before = "Colors", .name_repair = "minimal")
+sort.phycol <- c("#7A0403","#960D01","#AD1701","#C22403","#D43305","#E2430A","#AEFA37","#97FE43","#FC8625","#FE9E2F","#FCB436","#F5C63A","#E8D639","#D7E535","#C3F134","#EE5610","#F76E19","#7AFE59","#59FB73","#3BF58F","#24EBA9","#18E1BC","#1AD2D2","#25C0E7","#34ACF7","#4197FF","#4682F8","#476EE6","#4558CA","#4141A4","#392B74","#30123B")
+lphyl.v2 <- ggplot(long.phyl, aes(x = Sample, y = Abundance, fill = Phylum)) + 
+  geom_bar(position = "fill", stat = "identity", width = 0.7, color = "white") + 
+  scale_fill_manual(values = sort.phycol) + 
+  theme_ipsum_rc() + 
+  theme()
+ggsave(plot = lphyl.v2, 
+       filename = "Fig_8_sorted_relative_abundance_eukaryotes_phylum_level_tara_v9.png", 
+       path = "X:/Documents/Proyectos_R/sentinels/Figures/Characterization/TARA/", 
+       width = 23, 
+       height = 11, 
+       dpi = 600)
 ```
 
 
